@@ -9,8 +9,8 @@ param (
 $env:Path += ";C:\Program Files\nodejs\"
 
 pac install latest
-mkdir $solutionName
-cd $solutionName
+New-Item $solutionName -ItemType "directory"
+Set-Location $solutionName
 pac solution init --publisher-name $publisher --publisher-prefix $prefix
 
 if ($components.Count -eq 0) 
@@ -18,14 +18,17 @@ if ($components.Count -eq 0)
     $components = @($solutionName + "Component");
 }
 
-mkdir Components
-cd Components
+New-Item Components -ItemType "directory"
 foreach ($component in $components)
 {
-  mkdir $component
-  cd $component
+  Set-Location Components
+  New-Item $component -ItemType "directory"
+  Set-Location $component
   pac pcf init --namespace $namespace --name $component --template field
   npm install
-  cd ../..
+  Set-Location ../..
   pac solution add-reference --path Components/$component
 }
+
+$VSPath = Invoke-Expression -Command "cmd /c 'where /R ""%PROGRAMFILES(x86)%"" MSBuild.exe'" | Select-Object -First 1
+Invoke-Expression -Command "cmd /c ""$VSPath"" /t:build /restore"
